@@ -11,20 +11,32 @@ import UIKit
 class MasterViewController: UITableViewController {
 
     var detailViewController: DetailViewController? = nil
-    var objects = [Any]()
-
-
+    var cityList = [City]()
+    var filterdCity = [City]()
+    let searchCityController = UISearchController(searchResultsController: nil)
+    var cityParsingPresenter : CityParsingPresenter?
+    var cityRepository = CityRepository()
+    var activityIndicator : UIActivityIndicatorView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.cityParsingPresenter = CityParsingPresenter(cityParsingView: self,cityRepository: cityRepository)
+        
+        if let path = Bundle.main.path(forResource: "cities", ofType: "json") {
+            self.cityParsingPresenter?.parseCityJSON(path: path)
+        }
+        
         // Do any additional setup after loading the view.
-        navigationItem.leftBarButtonItem = editButtonItem
-
-        let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(insertNewObject(_:)))
-        navigationItem.rightBarButtonItem = addButton
         if let split = splitViewController {
             let controllers = split.viewControllers
             detailViewController = (controllers[controllers.count-1] as! UINavigationController).topViewController as? DetailViewController
         }
+        
+        searchCityController.searchResultsUpdater = self
+        searchCityController.obscuresBackgroundDuringPresentation = false
+        searchCityController.searchBar.placeholder = "Search city"
+        navigationItem.searchController = searchCityController
+        
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -32,21 +44,20 @@ class MasterViewController: UITableViewController {
         super.viewWillAppear(animated)
     }
 
-    @objc
-    func insertNewObject(_ sender: Any) {
-        objects.insert(NSDate(), at: 0)
-        let indexPath = IndexPath(row: 0, section: 0)
-        tableView.insertRows(at: [indexPath], with: .automatic)
-    }
 
     // MARK: - Segues
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showDetail" {
             if let indexPath = tableView.indexPathForSelectedRow {
-                let object = objects[indexPath.row] as! NSDate
                 let controller = (segue.destination as! UINavigationController).topViewController as! DetailViewController
-                controller.detailItem = object
+                if(searchCityController.isActive)
+                {
+                controller.detailItem = filterdCity[indexPath.row]
+                }
+                else{
+                controller.detailItem = cityList[indexPath.row]
+                }
                 controller.navigationItem.leftBarButtonItem = splitViewController?.displayModeButtonItem
                 controller.navigationItem.leftItemsSupplementBackButton = true
                 detailViewController = controller
@@ -61,30 +72,98 @@ class MasterViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return objects.count
+    
+        if(searchCityController.isActive)
+        {
+             return filterdCity.count
+        }
+        else
+        {
+            return cityList.count
+        }
+           
+        
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-        let object = objects[indexPath.row] as! NSDate
-        cell.textLabel!.text = object.description
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath) as! CityTableViewCell
+        
+        if(searchCityController.isActive){
+            let city = filterdCity[indexPath.row]
+            let id = String(city._id)
+            cell.country.text = city.name+", "+city.country+", "+id
+            cell.latlong.text = String(format:"%f", city.coord.lat)+","+String(format:"%f", city.coord.lon)
+        }else{
+            let city = cityList[indexPath.row]
+            let id = String(city._id)
+            cell.country.text = city.name+", "+city.country+", "+id
+            cell.latlong.text = String(format:"%f", city.coord.lat)+","+String(format:"%f", city.coord.lon)
+        }
         return cell
+        
     }
 
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         // Return false if you do not want the specified item to be editable.
         return true
     }
+}
+extension MasterViewController : UISearchResultsUpdating
+{
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let text = searchController.searchBar.text
+        else
+        {
+            self.tableView.reloadData()
+            return
+        }
+        
+        if(searchCityController.isActive && searchController.searchBar.text!.isEmpty)
+        {
+            print("is Empty")
+            filterdCity = cityList
+            tableView.reloadData()
+        }
+        else
+        {
+            filterdCity = cityList.filter({city -> Bool in
+                       city.name.lowercased().contains(text.lowercased())
+                   })
+        }
+        tableView.reloadData()
+    }
+}
 
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            objects.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view.
+extension MasterViewController : CityParsingView
+{
+    
+    func showActivityIndicator(){
+        activityIndicator = UIActivityIndicatorView(style: .large)
+        activityIndicator.center =  self.view.center
+        activityIndicator.startAnimating()
+        self.view.addSubview(activityIndicator)
+    }
+    
+    func hideActivityIndicator() {
+        
+        if(activityIndicator.isAnimating)
+        {
+            activityIndicator.stopAnimating()
+            self.activityIndicator.removeFromSuperview()
         }
     }
-
-
+    
+    func parsingSuccess(cityList: [City]) {
+        self.cityList =  cityList
+        print("inside : %d", self.cityList.count)
+        tableView.reloadData()
+    }
+    
+    func parsingFailed(error: Error) {
+        print(error.localizedDescription)
+    }
+    
+    
 }
+
 

@@ -11,6 +11,7 @@ import XCTest
 
 class TestAppTests: XCTestCase {
 
+
     override func setUp() {
         // Put setup code here. This method is called before the invocation of each test method in the class.
     }
@@ -22,6 +23,12 @@ class TestAppTests: XCTestCase {
     func testExample() {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
+        
+        //local path testing
+        let url = Bundle.main.path(forResource: "cities", ofType: "json")
+        XCTAssertNotNil(url)
+        
+        
     }
 
     func testPerformanceExample() {
@@ -30,5 +37,11 @@ class TestAppTests: XCTestCase {
             // Put the code you want to measure the time of here.
         }
     }
-
+    
 }
+
+
+
+    
+    
+
