@@ -20,7 +20,7 @@ class MasterViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.cityParsingPresenter = CityParsingPresenter(cityParsingView: self,cityRepository: cityRepository)
+        self.cityParsingPresenter = CityParsingPresenter(cityParsingView: self,repository: cityRepository)
         
         if let path = Bundle.main.path(forResource: "cities", ofType: "json") {
             self.cityParsingPresenter?.parseCityJSON(path: path)
@@ -127,7 +127,7 @@ extension MasterViewController : UISearchResultsUpdating
         else
         {
             filterdCity = cityList.filter({city -> Bool in
-                       city.name.lowercased().contains(text.lowercased())
+                       city.name.lowercased().starts(with: text.lowercased())
                    })
         }
         tableView.reloadData()

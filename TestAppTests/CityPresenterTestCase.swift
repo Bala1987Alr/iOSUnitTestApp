@@ -42,17 +42,14 @@ class CityPresenterTestCase: XCTestCase {
         getRepoWithCities()
         getCityparsingView()
         displayCitiesWithPresenter(repository: cityRepositoryWithCitiesSpy)
-        startUpdatePresenter()
-        
     }
     
     func testWithOutCities()
     {
         getRepoWithOutCities()
         getCityparsingView()
-        displayCitiesWithPresenter(repository: cityRepositoryWithCitiesSpy)
-        startUpdatePresenter()
-        
+        displayCitiesWithPresenter(repository: cityRepositoryWithOutCitiesSpy)
+    
     }
     
     private func getRepoWithCities()
@@ -71,13 +68,9 @@ class CityPresenterTestCase: XCTestCase {
     }
     private func displayCitiesWithPresenter(repository : Repository)
     {
-        cityParsingPresenter = CityParsingPresenter(cityParsingView: cityParsingViewSpy, cityRepository: repository as! CityRepository)
+        cityParsingPresenter = CityParsingPresenter(cityParsingView: cityParsingViewSpy, repository: repository)
     }
-    private func startUpdatePresenter()
-    {
-         let url = Bundle.main.path(forResource: "cities", ofType: "json")
-         cityParsingPresenter.parseCityJSON(path: url!)
-    }
+    
     private func showActivityIndicator()
     {
         XCTAssertTrue(cityParsingViewSpy.showLoadingStatusHasBeenCalled)

@@ -62,18 +62,18 @@ protocol CityParsingView
 class CityParsingPresenter
 {
     var cityParsingView : CityParsingView!
-    var cityRepository : CityRepository!
+    var repository : Repository!
     var cityList = [City]()
     
-    init(cityParsingView : CityParsingView, cityRepository: CityRepository) {
+    init(cityParsingView : CityParsingView, repository: Repository) {
         self.cityParsingView = cityParsingView
-        self.cityRepository =  cityRepository
+        self.repository =  repository
     }
     
     func parseCityJSON(path: String) {
         
             cityParsingView.showActivityIndicator()
-            cityRepository.get{
+            repository.get{
             
                 cityList in self.cityParsingView.parsingSuccess(cityList: cityList!)
                 
